@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ffi';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 
@@ -28,8 +27,6 @@ void parseRequestwithWit(String message) async {
       var locations = parseCities(data['entities']['wit\$location:location']);
       for (var location in locations) {
         if (location.hasFound) {
-          // print(
-          //     'Coordinates of ${location.name} is lat: ${location.lat}, long: ${location.long}');
           var weather = await getWeatherInfo(location);
           if (weather == null) {
             print('No weather information is found');
@@ -65,10 +62,16 @@ class Weather {
   String city;
   String desc;
   double temp;
+  bool isNow;
+  DateTime date;
 
+  Weather() : isNow = true;
+  
   @override
   String toString() {
-    return 'The weather in $city is $desc and the temperature is ${temp.toStringAsFixed(2)} Celcius';
+    if (isNow) {
+      return 'The weather in $city is $desc and the temperature is ${temp.toStringAsFixed(2)} Celcius right now';
+    } else {}
   }
 }
 
@@ -100,17 +103,17 @@ Future<Weather> getWeatherInfo(City city) async {
   }
 
   var url =
-      'https://api.openweathermap.org/data/2.5/weather?lat=${city.lat}&lon=${city.long}&units=metric&appid=${API_KEY}';
+      'https://api.openweathermap.org/data/2.5/onecall?lat=${city.lat}&lon=${city.long}&units=metric&exclude=minutely,hourly&appid=${API_KEY}';
   var response = await http.get(url);
 
   var data = jsonDecode(response.body);
-  if (data['cod'] != 200) {
+  if (data['cod'] == 400) {
     return null;
   }
 
   var weather = Weather();
-  weather.city = data['name'];
-  weather.desc = data['weather'][0]['description'];
-  weather.temp = data['main']['temp'];
+  weather.city = city.name;
+  weather.desc = data['current']['weather'][0]['description'];
+  weather.temp = data['current']['temp'];
   return weather;
 }

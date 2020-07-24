@@ -8,6 +8,7 @@ environment:
   sdk: '>=2.5.0 <3.0.0'
 
 dependencies:
+  # This is necessarry for http requests
  http:
 
 dev_dependencies:
