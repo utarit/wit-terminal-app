@@ -25,6 +25,10 @@ void parseRequestwithWit(String message) async {
   switch (intentName) {
     case 'weather':
       var locations = parseCities(data['entities']['wit\$location:location']);
+      if (locations == null) {
+        print('Locations does not found');
+        return;
+      }
       for (var location in locations) {
         if (location.hasFound) {
           var weather = await getWeatherInfo(location);
@@ -66,7 +70,7 @@ class Weather {
   DateTime date;
 
   Weather() : isNow = true;
-  
+
   @override
   String toString() {
     if (isNow) {
@@ -76,8 +80,10 @@ class Weather {
 }
 
 List<City> parseCities(dynamic locations) {
-  List<City> cities = [];
-
+  var cities = <City>[];
+  if (locations == null) {
+    return null;
+  }
   for (var entry in locations) {
     var city = City();
     if (entry['type'] == 'value') {
