@@ -13,7 +13,7 @@ void parseRequestwithWit(String message) async {
 
   var data = jsonDecode(response.body);
 
-  var maxConf = 0;
+  var maxConf = 0.0;
   var intentName = '';
 
   for (var intent in data['intents']) {
@@ -22,6 +22,9 @@ void parseRequestwithWit(String message) async {
       intentName = intent['name'];
     }
   }
+
+  // print(data);
+
   switch (intentName) {
     case 'weather':
       var locations = parseCities(data['entities']['wit\$location:location']);
@@ -42,6 +45,22 @@ void parseRequestwithWit(String message) async {
         }
       }
       break;
+    case 'time':
+      // print('Hello Time');
+      var locations = parseCities(data['entities']['wit\$location:location']);
+      if (locations == null) {
+        print('Locations does not found');
+        return;
+      }
+      for (var location in locations) {
+        var time = await getTime(location);
+        if (time == null) {
+          print('No time information is found');
+        } else {
+          print("It's ${time} in ${location.name}");
+        }
+      }
+      break;
     default:
       print('No action found');
       break;
@@ -52,6 +71,7 @@ class City {
   String name;
   double long;
   double lat;
+  String timezone;
   bool hasFound;
 
   City() {
@@ -60,12 +80,17 @@ class City {
     lat = null;
     hasFound = null;
   }
+
+  @override
+  String toString() {
+    return '$name';
+  }
 }
 
 class Weather {
   String city;
   String desc;
-  double temp;
+  num temp;
   bool isNow;
   DateTime date;
 
@@ -73,9 +98,7 @@ class Weather {
 
   @override
   String toString() {
-    if (isNow) {
-      return 'The weather in $city is $desc and the temperature is ${temp.toStringAsFixed(2)} Celcius right now';
-    } else {}
+    return 'The weather in $city is $desc and the temperature is ${temp.toStringAsFixed(2)} Celcius right now';
   }
 }
 
@@ -94,6 +117,7 @@ List<City> parseCities(dynamic locations) {
       city.name = entry['resolved']['values'][0]['name'];
       city.lat = entry['resolved']['values'][0]['coords']['lat'];
       city.long = entry['resolved']['values'][0]['coords']['long'];
+      city.timezone = entry['resolved']['values'][0]['timezone'];
       city.hasFound = true;
     }
 
@@ -122,4 +146,21 @@ Future<Weather> getWeatherInfo(City city) async {
   weather.desc = data['current']['weather'][0]['description'];
   weather.temp = data['current']['temp'];
   return weather;
+}
+
+Future<String> getTime(City city) async {
+  var url;
+  if (city == null) {
+    url = 'http://worldtimeapi.org/api/timezone/${city.timezone}';
+  } else {
+    url = 'http://worldtimeapi.org/api/timezone/${city.timezone}';
+  }
+  var response = await http.get(url);
+  var data = jsonDecode(response.body);
+  if (data['cod'] == 400) {
+    return null;
+  }
+  String time = data['datetime'];
+  var index = time.indexOf('T');
+  return time.substring(index + 1, index + 6);
 }
