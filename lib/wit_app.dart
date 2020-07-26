@@ -149,12 +149,8 @@ Future<Weather> getWeatherInfo(City city) async {
 }
 
 Future<String> getTime(City city) async {
-  var url;
-  if (city == null) {
-    url = 'http://worldtimeapi.org/api/timezone/${city.timezone}';
-  } else {
-    url = 'http://worldtimeapi.org/api/timezone/${city.timezone}';
-  }
+  var url = 'http://worldtimeapi.org/api/timezone/${city.timezone}';
+
   var response = await http.get(url);
   var data = jsonDecode(response.body);
   if (data['cod'] == 400) {
